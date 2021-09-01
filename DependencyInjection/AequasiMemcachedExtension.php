@@ -79,13 +79,11 @@ class AequasiMemcachedExtension extends Extension
             $client = new Reference(sprintf('memcached.%s', $cache['cluster']));
             foreach ($cache['entity_managers'] as $em) {
                 $definition = new Definition($container->getParameter('memcached.doctrine_cache.class'));
-                $definition->setScope(ContainerInterface::SCOPE_CONTAINER);
                 $definition->addMethodCall('setMemcached', [$client]);
                 $container->setDefinition(sprintf('doctrine.orm.%s_%s_cache', $em, $name), $definition);
             }
             foreach ($cache['document_managers'] as $dm) {
                 $definition = new Definition($container->getParameter('memcached.doctrine_cache.class'));
-                $definition->setScope(ContainerInterface::SCOPE_CONTAINER);
                 $definition->addMethodCall('setMemcached', [$client]);
                 $container->setDefinition(sprintf('doctrine.odm.mongodb.%s_%s_cache', $dm, $name), $definition);
             }
