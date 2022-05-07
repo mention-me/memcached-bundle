@@ -1,29 +1,15 @@
-memcached-bundle [![Build Status](https://travis-ci.org/aequasi/memcached-bundle.png?branch=master)](https://travis-ci.org/aequasi/memcached-bundle)
-================
+### Memcached Bundle for Symfony
 
-
-# THIS BUNDLE IS DEPRECATED
-
-Moving forward, use the [`php-cache`](http://www.php-cache.com) library
-
-
-## If you insist.....
-
-### Memcached Bundle for Symfony 2
-
-Creates a service in Symfony 2 that can also be used with doctrines `result_cache_driver` and `query_cache_driver`.
+Creates a service in Symfony that can also be used with doctrines `result_cache_driver` and `query_cache_driver`.
 
 There is also functionality for having a key map stored in mysql. Basically, it stores the keys, the size of the value, how long the lifetime is, and when it should expire.
 
-Should work in all versions of symfony, and php 5.3
-
-Requires the php5-memcached extension (Works with amazons elasticache extension as well)
+Requires the memcached extension. Works with amazons elasticache extension as well.
 
 ### Requirements
 
-- PHP 5.3.x or 5.4.x
-- php5-memcached 1.x or 2.x (this is the PHP "memcached" extension that uses "libmemcached")
-- (Works with amazons elasticache extension as well)
+- PHP 7+
+- memcached 1.x or 2.x (this is the PHP "memcached" extension that uses "libmemcached")
 
 ![screenshot](http://www.leaseweblabs.com/wp-content/uploads/2013/03/memcache_debug.png)
 
@@ -34,7 +20,7 @@ Requires the php5-memcached extension (Works with amazons elasticache extension 
 	// Replace dev master with what ever version you want
 ```
 
-Add the bundle to app/AppKernerl.php
+Add the bundle to app/AppKernel.php
 
 ```php
 $bundles(
@@ -51,8 +37,8 @@ aequasi_memcached:
     clusters:
         default:
             prefix: 'result_' # Optional
-            persistent_id: cluser_1
-            hosts: 
+            persistent_id: cluster_1
+            hosts:
               - { host: localhost, port: 11211, weight: 100 }
             options:
                 compression: true

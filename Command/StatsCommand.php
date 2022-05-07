@@ -7,7 +7,11 @@
 
 namespace Aequasi\Bundle\MemcachedBundle\Command;
 
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Aequasi\Bundle\MemcachedBundle\Cache\Memcached;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -17,126 +21,136 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  * Provides a command-line interface for viewing cache client stats
  * Based on Beryllium\CacheBundle by Kevin Boyd <beryllium@beryllium.ca>
  */
-class StatsCommand extends ContainerAwareCommand
+class StatsCommand extends Command
 {
+	protected static $defaultName = 'memcached:statistics';
 
-    /**
-     */
-    protected function configure()
-    {
-        $this
-            ->setName('memcached:statistics')
-            ->setDescription('Display Memcached statistics')
-            ->addArgument('cluster', InputArgument::REQUIRED, 'What cluster do you want to use');
-    }
+	protected ContainerInterface $container;
 
-    /**
-     * @param InputInterface  $input  Command input
-     * @param OutputInterface $output Command output
-     *
-     * @return void
-     */
-    protected function execute(InputInterface $input, OutputInterface $output)
-    {
-        $cluster = $input->getArgument('cluster');
-        try {
-            $memcached = $this->getContainer()->get('memcached.' . $cluster);
-            $output->writeln($this->formatStats($memcached->getStats()));
-        } catch (ServiceNotFoundException $e) {
-            $output->writeln("<error>client '{$cluster}' is not found</error>");
-        }
-    }
+	public function __construct(ContainerInterface $container)
+	{
+		parent::__construct();
 
-    /**
-     * Format the raw array for the command line report
-     *
-     * @param array $stats An array of memcache::extendedstats
-     *
-     * @return string ConsoleComponent-formatted output, suitable for ->writeln() usage
-     */
-    protected function formatStats($stats)
-    {
-        if ( ! $stats) {
-            return "No statistics returned.\n";
-        }
+		$this->container = $container;
+	}
 
-        $out = "Servers found: " . count($stats) . "\n\n";
-        foreach ($stats as $host => $item) {
-            if ( ! is_array($item) || count($item) == 0) {
-                $out .= "  <error>" . $host . "</error>\n";
+	protected function configure()
+	{
+		$this
+			->setDescription('Display Memcached statistics')
+			->addArgument('cluster', InputArgument::REQUIRED, 'What cluster do you want to use');
+	}
 
-                continue;
-            }
+	/**
+	 * @param InputInterface $input Command input
+	 * @param OutputInterface $output Command output
+	 *
+	 * @return void
+	 * @throws ContainerExceptionInterface
+	 * @throws NotFoundExceptionInterface
+	 */
+	protected function execute(InputInterface $input, OutputInterface $output)
+	{
+		$cluster = $input->getArgument('cluster');
+		try {
+			/** @var Memcached $memcached */
+			$memcached = $this->container->get('memcached.' . $cluster);
+			$output->writeln($this->formatStats($memcached->getStats()));
+		} catch (ServiceNotFoundException $e) {
+			$output->writeln("<error>client '{$cluster}' is not found</error>");
+		}
+	}
 
-            $out .= "<info>Host:\t" . $host . "</info>\n";
-            $out .= "\tUsage: " . $this->formatUsage($item['bytes'], $item['limit_maxbytes']) . "\n";
-            $out .= "\tUptime: " . $this->formatUptime($item['uptime']) . "\n";
-            $out .= "\tOpen Connections: " . $item['curr_connections'] . "\n";
-            $out .= "\tHits: " . $item['get_hits'] . "\n";
-            $out .= "\tMisses: " . $item['get_misses'] . "\n";
-            if ($item['get_hits'] + $item['get_misses'] > 0) {
-                $out .= "\tHelpfulness: " . round(
-                        $item['get_hits'] / ($item['get_hits'] + $item['get_misses']) * 100,
-                        2
-                    ) . "%\n";
-            }
-        }
+	/**
+	 * Format the raw array for the command line report
+	 *
+	 * @param array $stats An array of memcache::extendedstats
+	 *
+	 * @return string ConsoleComponent-formatted output, suitable for ->writeln() usage
+	 */
+	protected function formatStats($stats)
+	{
+		if (!$stats) {
+			return "No statistics returned.\n";
+		}
 
-        return $out;
-    }
+		$out = "Servers found: " . count($stats) . "\n\n";
+		foreach ($stats as $host => $item) {
+			if (!is_array($item) || count($item) == 0) {
+				$out .= "  <error>" . $host . "</error>\n";
 
-    /**
-     * Format the usage stats
-     *
-     * @param integer $bytes    Cache usage (in bytes)
-     * @param integer $maxbytes Cache maximum size (in bytes)
-     *
-     * @return string A short string with friendly formatting
-     */
-    protected function formatUsage($bytes, $maxbytes)
-    {
-        if ( ! is_numeric($maxbytes) || $maxbytes < 1) {
-            return '(undefined)';
-        }
+				continue;
+			}
 
-        $out = round($bytes / $maxbytes, 3) . "% (";
-        $out .= round($bytes / 1024 / 1024, 2) . 'MB of ';
-        $out .= round($maxbytes / 1024 / 1024, 2) . 'MB)';
+			$out .= "<info>Host:\t" . $host . "</info>\n";
+			$out .= "\tUsage: " . $this->formatUsage($item['bytes'], $item['limit_maxbytes']) . "\n";
+			$out .= "\tUptime: " . $this->formatUptime($item['uptime']) . "\n";
+			$out .= "\tOpen Connections: " . $item['curr_connections'] . "\n";
+			$out .= "\tHits: " . $item['get_hits'] . "\n";
+			$out .= "\tMisses: " . $item['get_misses'] . "\n";
+			if ($item['get_hits'] + $item['get_misses'] > 0) {
+				$out .= "\tHelpfulness: " . round(
+						$item['get_hits'] / ($item['get_hits'] + $item['get_misses']) * 100,
+						2
+					) . "%\n";
+			}
+		}
 
-        return $out;
-    }
+		return $out;
+	}
 
-    /**
-     * Formats the uptime to be friendlier
-     *
-     * @param integer $uptime Cache server uptime (in seconds)
-     *
-     * @return string A short string with friendly formatting
-     */
-    protected function formatUptime($uptime)
-    {
-        $days = floor($uptime / 24 / 60 / 60);
-        $daysRemainder = $uptime - ($days * 24 * 60 * 60);
-        $hours = floor($daysRemainder / 60 / 60);
-        $hoursRemainder = $daysRemainder - ($hours * 60 * 60);
-        $minutes = floor($hoursRemainder / 60);
-        $minutesRemainder = $hoursRemainder - ($minutes * 60);
-        $seconds = $minutesRemainder;
+	/**
+	 * Format the usage stats
+	 *
+	 * @param integer $bytes Cache usage (in bytes)
+	 * @param integer $maxbytes Cache maximum size (in bytes)
+	 *
+	 * @return string A short string with friendly formatting
+	 */
+	protected function formatUsage($bytes, $maxbytes)
+	{
+		if (!is_numeric($maxbytes) || $maxbytes < 1) {
+			return '(undefined)';
+		}
 
-        $out = $uptime . ' seconds (';
-        if ($days > 0) {
-            $out .= $days . ' days, ';
-        }
-        if ($hours > 0) {
-            $out .= $hours . ' hours, ';
-        }
-        if ($minutes > 0) {
-            $out .= $minutes . ' minutes, ';
-        }
-        if ($seconds > 0) {
-            $out .= $seconds . ' seconds';
-        }
+		$out = round($bytes / $maxbytes, 3) . "% (";
+		$out .= round($bytes / 1024 / 1024, 2) . 'MB of ';
+		$out .= round($maxbytes / 1024 / 1024, 2) . 'MB)';
 
-        return $out . ')';
-    }
+		return $out;
+	}
+
+	/**
+	 * Formats the uptime to be friendlier
+	 *
+	 * @param integer $uptime Cache server uptime (in seconds)
+	 *
+	 * @return string A short string with friendly formatting
+	 */
+	protected function formatUptime($uptime)
+	{
+		$days = floor($uptime / 24 / 60 / 60);
+		$daysRemainder = $uptime - ($days * 24 * 60 * 60);
+		$hours = floor($daysRemainder / 60 / 60);
+		$hoursRemainder = $daysRemainder - ($hours * 60 * 60);
+		$minutes = floor($hoursRemainder / 60);
+		$minutesRemainder = $hoursRemainder - ($minutes * 60);
+		$seconds = $minutesRemainder;
+
+		$out = $uptime . ' seconds (';
+		if ($days > 0) {
+			$out .= $days . ' days, ';
+		}
+		if ($hours > 0) {
+			$out .= $hours . ' hours, ';
+		}
+		if ($minutes > 0) {
+			$out .= $minutes . ' minutes, ';
+		}
+		if ($seconds > 0) {
+			$out .= $seconds . ' seconds';
+		}
+
+		return $out . ')';
+	}
 }

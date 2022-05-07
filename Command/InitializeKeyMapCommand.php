@@ -7,8 +7,10 @@
 
 namespace Aequasi\Bundle\MemcachedBundle\Command;
 
+use Aequasi\Bundle\MemcachedBundle\Cache\Memcached;
 use Doctrine\DBAL\Connection;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Psr\Container\ContainerInterface;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -19,37 +21,47 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  *
  * Flushed the given memcached cluster
  */
-class InitializeKeyMapCommand extends ContainerAwareCommand
+class InitializeKeyMapCommand extends Command
 {
+	protected static $defaultName = 'memcached:initialize:keymap';
 
-    /**
-     *
-     */
-    protected function configure()
-    {
-        $this
-            ->setName('memcached:initialize:keymap')
-            ->setDescription('Initialize the Memcached Mysql Key Map')
-            ->addArgument('cluster', InputArgument::REQUIRED, 'What cluster do you want to use');
-    }
+	protected ContainerInterface $container;
 
+	public function __construct(ContainerInterface $container)
+	{
+		parent::__construct();
 
-    /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
-     * @return void
-     */
-    protected function execute(InputInterface $input, OutputInterface $output)
-    {
-        $cluster = $input->getArgument('cluster');
-        try {
-            $memcached = $this->getContainer()->get('memcached.' . $cluster);
+		$this->container = $container;
+	}
 
-            /** @var Connection $connection */
-            $connection = $memcached->getKeyMapConnection();
+	/**
+	 *
+	 */
+	protected function configure()
+	{
+		$this
+			->setName('memcached:initialize:keymap')
+			->setDescription('Initialize the Memcached Mysql Key Map')
+			->addArgument('cluster', InputArgument::REQUIRED, 'What cluster do you want to use');
+	}
 
-            $sql = <<<SQL
+	/**
+	 * @param InputInterface $input
+	 * @param OutputInterface $output
+	 *
+	 * @return void
+	 */
+	protected function execute(InputInterface $input, OutputInterface $output)
+	{
+		$cluster = $input->getArgument('cluster');
+		try {
+			/** @var Memcached $memcached */
+			$memcached = $this->container->get('memcached.' . $cluster);
+
+			/** @var Connection $connection */
+			$connection = $memcached->getKeyMapConnection();
+
+			$sql = <<<SQL
 CREATE TABLE `memcached_key_map` (
 `id` BIGINT(32) UNSIGNED NOT NULL AUTO_INCREMENT,
 `cache_key` VARCHAR(255) NOT NULL,
@@ -66,13 +78,13 @@ INDEX (`insert_date`)
 ) ENGINE=INNODB;
 SQL;
 
-            $output->writeln("Attempting to create `memcached_key_map` table");
-            $connection->executeQuery("DROP TABLE IF EXISTS `memcached_key_map`;");
-            $connection->executeQuery($sql);
+			$output->writeln("Attempting to create `memcached_key_map` table");
+			$connection->executeQuery("DROP TABLE IF EXISTS `memcached_key_map`;");
+			$connection->executeQuery($sql);
 
-        } catch (ServiceNotFoundException $e) {
-            $output->writeln("<error>cluster '{$cluster}' is not found</error>");
-        }
-        $output->writeln("\n");
-    }
+		} catch (ServiceNotFoundException $e) {
+			$output->writeln("<error>cluster '{$cluster}' is not found</error>");
+		}
+		$output->writeln("\n");
+	}
 }

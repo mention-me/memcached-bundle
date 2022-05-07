@@ -7,7 +7,11 @@
 
 namespace Aequasi\Bundle\MemcachedBundle\Command;
 
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Aequasi\Bundle\MemcachedBundle\Cache\Memcached;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -18,42 +22,52 @@ use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
  *
  * Grabs the given key out of cache
  */
-class DeleteCommand extends ContainerAwareCommand
+class DeleteCommand extends Command
 {
+	protected static $defaultName = 'memcached:delete';
 
-    /**
-     *
-     */
-    protected function configure()
-    {
-        $this->setName('memcached:delete')
-            ->setDescription("Delete a key from memcached")
-            ->addArgument('cluster', InputArgument::REQUIRED, 'What cluster do you want to use')
-            ->addArgument('key', InputArgument::REQUIRED, 'What key do you want to delete');
-    }
+	protected ContainerInterface $container;
 
-    /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
-     * @return void
-     */
-    protected function execute(InputInterface $input, OutputInterface $output)
-    {
-        $key = $input->getArgument('key');
-        $cluster = $input->getArgument('cluster');
+	protected function configure()
+	{
+		$this
+			->setDescription("Delete a key from memcached")
+			->addArgument('cluster', InputArgument::REQUIRED, 'What cluster do you want to use')
+			->addArgument('key', InputArgument::REQUIRED, 'What key do you want to delete');
+	}
 
-        try {
-            $memcached = $this->getContainer()->get('memcached.' . $cluster);
-            $memcached->delete($key);
-            if ($memcached->hasError()) {
-                $output->writeln(sprintf('<error>%s</error>', $memcached->getError()));
-            } else {
-                $output->writeln('<info>OK</info>');
-            }
-        } catch (ServiceNotFoundException $e) {
-            $output->writeln("<error>cluster '{$cluster}' is not found</error>");
-        }
-        $output->writeln("\n");
-    }
+	public function __construct(ContainerInterface $container)
+	{
+		parent::__construct();
+
+		$this->container = $container;
+	}
+
+	/**
+	 * @param InputInterface $input
+	 * @param OutputInterface $output
+	 *
+	 * @return void
+	 * @throws ContainerExceptionInterface
+	 * @throws NotFoundExceptionInterface
+	 */
+	protected function execute(InputInterface $input, OutputInterface $output)
+	{
+		$key = $input->getArgument('key');
+		$cluster = $input->getArgument('cluster');
+
+		try {
+			/** @var Memcached $memcached */
+			$memcached = $this->container->get('memcached.' . $cluster);
+			$memcached->delete($key);
+			if ($memcached->hasError()) {
+				$output->writeln(sprintf('<error>%s</error>', $memcached->getError()));
+			} else {
+				$output->writeln('<info>OK</info>');
+			}
+		} catch (ServiceNotFoundException $e) {
+			$output->writeln("<error>cluster '{$cluster}' is not found</error>");
+		}
+		$output->writeln("\n");
+	}
 }
