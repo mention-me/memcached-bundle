@@ -9,7 +9,6 @@ namespace Aequasi\Bundle\MemcachedBundle\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Exception\LogicException;
 use Symfony\Component\DependencyInjection\Loader;
@@ -26,239 +25,239 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 class AequasiMemcachedExtension extends Extension
 {
 
-    /**
-     * Loads the configs for Memcached and puts data into the container
-     *
-     * @param array            $configs   Array of configs
-     * @param ContainerBuilder $container Container Object
-     */
-    public function load(array $configs, ContainerBuilder $container)
-    {
-        $configuration = $this->getConfiguration($configs, $container);
-        $config = $this->processConfiguration($configuration, $configs);
+	/**
+	 * Loads the configs for Memcached and puts data into the container
+	 *
+	 * @param array $configs Array of configs
+	 * @param ContainerBuilder $container Container Object
+	 */
+	public function load(array $configs, ContainerBuilder $container)
+	{
+		$configuration = $this->getConfiguration($configs, $container);
+		$config = $this->processConfiguration($configuration, $configs);
 
-        $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
+		$loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
 
-        $loader->load('config.yml');
-        if ($container->getParameter('kernel.debug')) {
-            $loader->load('debug.yml');
-        }
+		$loader->load('config.yml');
+		if ($container->getParameter('kernel.debug')) {
+			$loader->load('debug.yml');
+		}
 
-        if (isset($config['session'])) {
-            $this->enableSessionSupport($config, $container);
-        }
-        if (isset($config['doctrine'])) {
-            $this->loadDoctrine($config, $container);
-        }
-        if (isset($config['clusters'])) {
-            $this->addClusters($config, $container);
-        }
-    }
+		if (isset($config['session'])) {
+			$this->enableSessionSupport($config, $container);
+		}
+		if (isset($config['doctrine'])) {
+			$this->loadDoctrine($config, $container);
+		}
+		if (isset($config['clusters'])) {
+			$this->addClusters($config, $container);
+		}
+	}
 
-    /**
-     * @param array            $config
-     * @param ContainerBuilder $container
-     *
-     * @return Configuration
-     */
-    public function getConfiguration(array $config, ContainerBuilder $container)
-    {
-        return new Configuration($container->getParameter('kernel.debug'));
-    }
+	/**
+	 * @param array $config
+	 * @param ContainerBuilder $container
+	 *
+	 * @return Configuration
+	 */
+	public function getConfiguration(array $config, ContainerBuilder $container)
+	{
+		return new Configuration($container->getParameter('kernel.debug'));
+	}
 
-    /**
-     * Loads the Doctrine configuration.
-     *
-     * @param array            $config    A configuration array
-     * @param ContainerBuilder $container A ContainerBuilder instance
-     */
-    protected function loadDoctrine(array $config, ContainerBuilder $container)
-    {
-        foreach ($config['doctrine'] as $name => $cache) {
-            $clusterConfig = $config['clusters'][$cache['cluster']];
-            $client = new Reference(sprintf('memcached.%s', $cache['cluster']));
-            foreach ($cache['entity_managers'] as $em) {
-                $definition = new Definition($container->getParameter('memcached.doctrine_cache.class'));
-                $definition->addMethodCall('setMemcached', [$client]);
-                $container->setDefinition(sprintf('doctrine.orm.%s_%s_cache', $em, $name), $definition);
-            }
-            foreach ($cache['document_managers'] as $dm) {
-                $definition = new Definition($container->getParameter('memcached.doctrine_cache.class'));
-                $definition->addMethodCall('setMemcached', [$client]);
-                $container->setDefinition(sprintf('doctrine.odm.mongodb.%s_%s_cache', $dm, $name), $definition);
-            }
-        }
-    }
+	/**
+	 * Loads the Doctrine configuration.
+	 *
+	 * @param array $config A configuration array
+	 * @param ContainerBuilder $container A ContainerBuilder instance
+	 */
+	protected function loadDoctrine(array $config, ContainerBuilder $container)
+	{
+		foreach ($config['doctrine'] as $name => $cache) {
+			$clusterConfig = $config['clusters'][$cache['cluster']];
+			$client = new Reference(sprintf('memcached.%s', $cache['cluster']));
+			foreach ($cache['entity_managers'] as $em) {
+				$definition = new Definition($container->getParameter('memcached.doctrine_cache.class'));
+				$definition->addMethodCall('setMemcached', [$client]);
+				$container->setDefinition(sprintf('doctrine.orm.%s_%s_cache', $em, $name), $definition);
+			}
+			foreach ($cache['document_managers'] as $dm) {
+				$definition = new Definition($container->getParameter('memcached.doctrine_cache.class'));
+				$definition->addMethodCall('setMemcached', [$client]);
+				$container->setDefinition(sprintf('doctrine.odm.mongodb.%s_%s_cache', $dm, $name), $definition);
+			}
+		}
+	}
 
-    /**
-     * Enables session support for memcached
-     *
-     * @param array            $config    Configuration for bundle
-     * @param ContainerBuilder $container Service container
-     *
-     * @throws LogicException
-     */
-    private function enableSessionSupport(array $config, ContainerBuilder $container)
-    {
-        $cluster = $config['session']['cluster'];
-        if (null === $cluster) {
-            return;
-        }
-        if ( ! isset($config['clusters']) || ! isset($config['clusters'][$cluster])) {
-            throw new LogicException(
-                sprintf('Failed to hook into the session. The cluster "%s" doesn\'t exist!', $cluster)
-            );
-        }
-        // calculate options
-        $sessionOptions = $container->getParameter('session.storage.options');
-        $options = [];
-        if (isset($config['session']['ttl'])) {
-            $options['expiretime'] = $config['session']['ttl'];
-        } elseif (isset($sessionOptions['cookie_lifetime'])) {
-            $options['expiretime'] = $sessionOptions['cookie_lifetime'];
-        }
-        if (isset($config['session']['prefix'])) {
-            $options['prefix'] = $config['session']['prefix'];
-        }
-        // load the session handler
-        $definition = new Definition($container->getParameter('memcached.session_handler.class'));
-        $container->setDefinition('memcached.session_handler', $definition);
-        $definition
-            ->addArgument(new Reference(sprintf('memcached.%s', $cluster)))
-            ->addArgument($options);
-    }
+	/**
+	 * Enables session support for memcached
+	 *
+	 * @param array $config Configuration for bundle
+	 * @param ContainerBuilder $container Service container
+	 *
+	 * @throws LogicException
+	 */
+	private function enableSessionSupport(array $config, ContainerBuilder $container)
+	{
+		$cluster = $config['session']['cluster'];
+		if (null === $cluster) {
+			return;
+		}
+		if (!isset($config['clusters']) || !isset($config['clusters'][$cluster])) {
+			throw new LogicException(
+				sprintf('Failed to hook into the session. The cluster "%s" doesn\'t exist!', $cluster)
+			);
+		}
+		// calculate options
+		$sessionOptions = $container->getParameter('session.storage.options');
+		$options = [];
+		if (isset($config['session']['ttl'])) {
+			$options['expiretime'] = $config['session']['ttl'];
+		} elseif (isset($sessionOptions['cookie_lifetime'])) {
+			$options['expiretime'] = $sessionOptions['cookie_lifetime'];
+		}
+		if (isset($config['session']['prefix'])) {
+			$options['prefix'] = $config['session']['prefix'];
+		}
+		// load the session handler
+		$definition = new Definition($container->getParameter('memcached.session_handler.class'));
+		$container->setDefinition('memcached.session_handler', $definition);
+		$definition
+			->addArgument(new Reference(sprintf('memcached.%s', $cluster)))
+			->addArgument($options);
+	}
 
-    /**
-     * Adds memcached clusters to the service container
-     *
-     * @param array            $config    A configuration array
-     * @param ContainerBuilder $container Service container
-     *
-     * @throws LogicException
-     */
-    private function addClusters(array $config, ContainerBuilder $container)
-    {
-        foreach ($config['clusters'] as $cluster => $memcachedConfig) {
-            $this->newMemcachedClient($cluster, $memcachedConfig, $container);
-        }
-    }
+	/**
+	 * Adds memcached clusters to the service container
+	 *
+	 * @param array $config A configuration array
+	 * @param ContainerBuilder $container Service container
+	 *
+	 * @throws LogicException
+	 */
+	private function addClusters(array $config, ContainerBuilder $container)
+	{
+		foreach ($config['clusters'] as $cluster => $memcachedConfig) {
+			$this->newMemcachedClient($cluster, $memcachedConfig, $container);
+		}
+	}
 
-    /**
-     * Creates a new Memcached definition
-     *
-     *
-     * Taken and modified from
-     *
-     * @link https://github.com/LeaseWeb/LswMemcacheBundle/blob/master/DependencyInjection/LswMemcacheExtension.php
-     *
-     * @param string           $name      Cluster name
-     * @param array            $config    Cluster configuration
-     * @param ContainerBuilder $container Service container
-     *
-     * @throws \LogicException
-     */
-    private function newMemcachedClient($name, array $config, ContainerBuilder $container)
-    {
-        // Check if the Memcached extension is loaded
-        if ( ! class_exists('Memcached')) {
-            throw new \Exception(
-                'Memcached extension is not loaded! To configure memcached clients it MUST be loaded!'
-            );
-        }
+	/**
+	 * Creates a new Memcached definition
+	 *
+	 *
+	 * Taken and modified from
+	 *
+	 * @link https://github.com/LeaseWeb/LswMemcacheBundle/blob/master/DependencyInjection/LswMemcacheExtension.php
+	 *
+	 * @param string $name Cluster name
+	 * @param array $config Cluster configuration
+	 * @param ContainerBuilder $container Service container
+	 *
+	 * @throws \LogicException
+	 */
+	private function newMemcachedClient($name, array $config, ContainerBuilder $container)
+	{
+		// Check if the Memcached extension is loaded
+		if (!class_exists('Memcached')) {
+			throw new \Exception(
+				'Memcached extension is not loaded! To configure memcached clients it MUST be loaded!'
+			);
+		}
 
-        $memcached = new Definition('Aequasi\Bundle\MemcachedBundle\Cache\AntiStampedeMemcached');
+		$memcached = new Definition('Aequasi\Bundle\MemcachedBundle\Cache\AntiStampedeMemcached');
 
-        // Is this Cluster Enabled
-        $memcached->addArgument($config['enabled']);
+		// Is this Cluster Enabled
+		$memcached->addArgument($config['enabled']);
 
-        // Is this Cluster Logging
-        $memcached->addArgument(new Parameter('kernel.debug'));
+		// Is this Cluster Logging
+		$memcached->addArgument(new Parameter('kernel.debug'));
 
-        // Check if it has to be persistent
-        if (isset($config['persistent_id'])) {
-            $memcached->addArgument($config['persistent_id']);
-        }
+		// Check if it has to be persistent
+		if (isset($config['persistent_id'])) {
+			$memcached->addArgument($config['persistent_id']);
+		}
 
-        // Check if Key Map logging is enabled
-        if ($config['keyMap']['enabled']) {
-            $memcached->addMethodCall(
-                'setupKeyMap',
-                [
-                    $config['keyMap'],
-                    new Reference('doctrine'),
-                ]
-            );
-        }
+		// Check if Key Map logging is enabled
+		if ($config['keyMap']['enabled']) {
+			$memcached->addMethodCall(
+				'setupKeyMap',
+				[
+					$config['keyMap'],
+					new Reference('doctrine'),
+				]
+			);
+		}
 
-        // Add servers to the memcached client
-        $servers = [];
-        foreach ($config['hosts'] as $host) {
-            $servers[] = [
-                $host['host'],
-                $host['port'],
-                $host['weight'],
-            ];
-        }
-        $memcached->addMethodCall('addServers', [$servers]);
+		// Add servers to the memcached client
+		$servers = [];
+		foreach ($config['hosts'] as $host) {
+			$servers[] = [
+				$host['host'],
+				$host['port'],
+				$host['weight'],
+			];
+		}
+		$memcached->addMethodCall('addServers', [$servers]);
 
-        if ( ! empty($config['prefix'])) {
-            $memcached->addMethodCall('setNamespace', [$config['prefix']]);
-        }
+		if (!empty($config['prefix'])) {
+			$memcached->addMethodCall('setNamespace', [$config['prefix']]);
+		}
 
-        // Get default memcached options
-        $options = $container->getParameter('memcached.default_options');
+		// Get default memcached options
+		$options = $container->getParameter('memcached.default_options');
 
-        // Add overriden options
-        if (isset($config['options'])) {
-            foreach ($options as $key => $value) {
-                if (isset($config['options'][$key])) {
-                    if ($key == 'serializer') {
-                        // serializer option needs to be supported and is a constant
-                        if ($value != 'php' && ! constant('Memcached::HAVE_' . strtoupper($value))) {
-                            throw new \LogicException("Invalid serializer specified for Memcached: $value");
-                        }
-                        $newValue = constant('Memcached::SERIALIZER_' . strtoupper($value));
-                    } elseif ($key == 'distribution') {
-                        // distribution is defined as a constant
-                        $newValue = constant('Memcached::DISTRIBUTION_' . strtoupper($value));
-                    } else {
-                        $newValue = $config['options'][$key];
-                    }
-                    if ($config['options'][$key] != $value) {
-                        // not default, add method call and update options
-                        $constant = 'Memcached::OPT_' . strtoupper($key);
-                        $memcached->addMethodCall(
-                            'setOption',
-                            [
-                                constant($constant),
-                                $newValue,
-                            ]
-                        );
-                        $options[$key] = $newValue;
-                    }
-                }
-            }
-        }
+		// Add overriden options
+		if (isset($config['options'])) {
+			foreach ($options as $key => $value) {
+				if (isset($config['options'][$key])) {
+					if ($key == 'serializer') {
+						// serializer option needs to be supported and is a constant
+						if ($value != 'php' && !constant('Memcached::HAVE_' . strtoupper($value))) {
+							throw new \LogicException("Invalid serializer specified for Memcached: $value");
+						}
+						$newValue = constant('Memcached::SERIALIZER_' . strtoupper($value));
+					} elseif ($key == 'distribution') {
+						// distribution is defined as a constant
+						$newValue = constant('Memcached::DISTRIBUTION_' . strtoupper($value));
+					} else {
+						$newValue = $config['options'][$key];
+					}
+					if ($config['options'][$key] != $value) {
+						// not default, add method call and update options
+						$constant = 'Memcached::OPT_' . strtoupper($key);
+						$memcached->addMethodCall(
+							'setOption',
+							[
+								constant($constant),
+								$newValue,
+							]
+						);
+						$options[$key] = $newValue;
+					}
+				}
+			}
+		}
 
-        // Make sure that config values are human readable
-        foreach ($options as $key => $value) {
-            $options[$key] = var_export($value, true);
-        }
+		// Make sure that config values are human readable
+		foreach ($options as $key => $value) {
+			$options[$key] = var_export($value, true);
+		}
 
-        // Add the service to the container
-        $serviceName = sprintf('memcached.%s', $name);
-        $container->setDefinition($serviceName, $memcached);
-        // Add the service to the data collector
-        if ($container->hasDefinition('data_collector.memcached')) {
-            $definition = $container->getDefinition('data_collector.memcached');
-            $definition->addMethodCall(
-                'addCluster',
-                [
-                    $name,
-                    $options,
-                    new Reference($serviceName),
-                ]
-            );
-        }
-    }
+		// Add the service to the container
+		$serviceName = sprintf('memcached.%s', $name);
+		$container->setDefinition($serviceName, $memcached);
+		// Add the service to the data collector
+		if ($container->hasDefinition('data_collector.memcached')) {
+			$definition = $container->getDefinition('data_collector.memcached');
+			$definition->addMethodCall(
+				'addCluster',
+				[
+					$name,
+					$options,
+					new Reference($serviceName),
+				]
+			);
+		}
+	}
 }

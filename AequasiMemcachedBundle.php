@@ -17,13 +17,13 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 class AequasiMemcachedBundle extends Bundle
 {
 
-    /**
-     * {@inheritDoc}
-     */
-    public function build(ContainerBuilder $container)
-    {
-        parent::build($container);
+	/**
+	 * {@inheritDoc}
+	 */
+	public function build(ContainerBuilder $container)
+	{
+		parent::build($container);
 
-        $container->addCompilerPass(new EnableSessionSupport());
-    }
+		$container->addCompilerPass(new EnableSessionSupport());
+	}
 }

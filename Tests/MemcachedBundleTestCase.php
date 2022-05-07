@@ -17,51 +17,51 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 class MemcachedBundle extends TestCase
 {
 
-    /**
-     * @return ContainerBuilder
-     */
-    public function createYamlBundleTestContainer()
-    {
-        $container = new ContainerBuilder(
-            new ParameterBag(
-                [
-                    'kernel.debug'       => false,
-                    'kernel.bundles'     => ['YamlBundle' => 'Fixtures\Bundles\YamlBundle\YamlBundle'],
-                    'kernel.cache_dir'   => sys_get_temp_dir(),
-                    'kernel.environment' => 'test',
-                    'kernel.root_dir'    => __DIR__ . '/../../../../'
-                    // src dir
-                ]
-            )
-        );
-        $container->set('annotation_reader', new AnnotationReader());
-        $loader = new AequasiMemcachedExtension();
-        $container->registerExtension($loader);
-        $loader->load(
-            [
-                [
-                    'clusters' => [
-                        'default' => [
-                            'hosts'  => [
-                                [
-                                    'host' => 'localhost',
-                                    'port' => 11211,
-                                ],
-                            ],
-                            'keyMap' => [
-                                'enabled' => false,
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-            $container
-        );
+	/**
+	 * @return ContainerBuilder
+	 */
+	public function createYamlBundleTestContainer()
+	{
+		$container = new ContainerBuilder(
+			new ParameterBag(
+				[
+					'kernel.debug' => false,
+					'kernel.bundles' => ['YamlBundle' => 'Fixtures\Bundles\YamlBundle\YamlBundle'],
+					'kernel.cache_dir' => sys_get_temp_dir(),
+					'kernel.environment' => 'test',
+					'kernel.root_dir' => __DIR__ . '/../../../../'
+					// src dir
+				]
+			)
+		);
+		$container->set('annotation_reader', new AnnotationReader());
+		$loader = new AequasiMemcachedExtension();
+		$container->registerExtension($loader);
+		$loader->load(
+			[
+				[
+					'clusters' => [
+						'default' => [
+							'hosts' => [
+								[
+									'host' => 'localhost',
+									'port' => 11211,
+								],
+							],
+							'keyMap' => [
+								'enabled' => false,
+							],
+						],
+					],
+				],
+			],
+			$container
+		);
 
-        $container->getCompilerPassConfig()->setOptimizationPasses([new ResolveDefinitionTemplatesPass()]);
-        $container->getCompilerPassConfig()->setRemovingPasses([]);
-        $container->compile();
+		$container->getCompilerPassConfig()->setOptimizationPasses([new ResolveDefinitionTemplatesPass()]);
+		$container->getCompilerPassConfig()->setRemovingPasses([]);
+		$container->compile();
 
-        return $container;
-    }
+		return $container;
+	}
 }

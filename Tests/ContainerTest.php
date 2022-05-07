@@ -15,14 +15,14 @@ namespace Aequasi\Bundle\MemcachedBundle\Tests;
 class ContainerTest extends TestCase
 {
 
-    /**
-     *
-     */
-    public function testContainer()
-    {
-        $container = $this->createYamlBundleTestContainer();
+	/**
+	 *
+	 */
+	public function testContainer()
+	{
+		$container = $this->createYamlBundleTestContainer();
 
-        // @TODO Create Tests.....
-        $this->assertTrue(true);
-    }
+		// @TODO Create Tests.....
+		$this->assertTrue(true);
+	}
 }
