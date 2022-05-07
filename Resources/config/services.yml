@@ -1,4 +1,7 @@
 services:
-    memcached:
-        class: MentionMe\Bundle\MemcachedBundle\Service\MemcachedService
-        arguments: [ %memcached%, "@?doctrine" ]
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    MentionMe\MemcachedBundle\Command\:
+        resource: '../../Command/*'
