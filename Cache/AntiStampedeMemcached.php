@@ -5,7 +5,7 @@
  * @copyright Underground Elephant
  */
 
-namespace Aequasi\Bundle\MemcachedBundle\Cache;
+namespace MentionMe\Bundle\MemcachedBundle\Cache;
 
 /**
  * AntiStampedeMemcached Class

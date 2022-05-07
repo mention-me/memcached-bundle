@@ -1,19 +1,24 @@
 {
-	"name":        "aequasi/memcached-bundle",
+	"name":        "mention-me/memcached-bundle",
 	"type":        "library",
 	"description": "Memcached Bundle",
 	"keywords":    ["php", "memcached"],
-	"homepage":    "https://github.com/aequasi/memcached-bundle",
+	"homepage":    "https://github.com/mention-me/memcached-bundle",
 	"license":     "Apache",
 	"authors":     [
 		{
 			"name":     "Aaron Scherer",
 			"email":    "aequasi@gmail.com",
 			"homepage": "https://github.com/aequasi"
-		}
+		},
+	    {
+			"name":     "Edward Hartwell Goose",
+			"email":    "dev@mention-me.com",
+			"homepage": "https://github.com/mention-me"
+	  	}
 	],
 	"support":     {
-		"email": "aequasi@gmail.com"
+		"email": "dev@mention-me.com"
 	},
 	"require":     {
 		"php": "^7.4",
@@ -24,11 +29,11 @@
 	},
 	"autoload":    {
 		"psr-0": {
-			"Aequasi\\Bundle\\MemcachedBundle": ""
+			"MentionMe\\Bundle\\MemcachedBundle": ""
 		},
 	    "psr-4": {
-		  	"Aequasi\\Bundle\\MemcachedBundle\\": ""
+		  	"MentionMe\\Bundle\\MemcachedBundle\\": ""
 	  	}
 	},
-	"target-dir": "Aequasi/Bundle/MemcachedBundle"
+	"target-dir": "MentionMe/Bundle/MemcachedBundle"
 }

@@ -5,10 +5,10 @@
  * @license   http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
-namespace Aequasi\Bundle\MemcachedBundle\Session;
+namespace MentionMe\Bundle\MemcachedBundle\Session;
 
-use Aequasi\Bundle\MemcachedBundle\Cache\Memcached;
 use InvalidArgumentException;
+use MentionMe\Bundle\MemcachedBundle\Cache\Memcached;
 use SessionHandlerInterface;
 
 /**

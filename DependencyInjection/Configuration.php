@@ -5,7 +5,7 @@
  * @license   http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
-namespace Aequasi\Bundle\MemcachedBundle\DependencyInjection;
+namespace MentionMe\Bundle\MemcachedBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
@@ -18,7 +18,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  * This information is solely responsible for how the different configuration
  * sections are normalized, and merged.
  *
- * @package Aequasi\Bundle\MemcachedBundle\DependencyInjection
+ * @package MentionMe\Bundle\MemcachedBundle\DependencyInjection
  *
  */
 class Configuration implements ConfigurationInterface

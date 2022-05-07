@@ -16,7 +16,7 @@ Requires the memcached extension. Works with amazons elasticache extension as we
 ### To Install
 
 ```sh
-	composer.phar require aequasi/memcached-bundle dev-master
+	composer.phar require mention-me/memcached-bundle dev-master
 	// Replace dev master with what ever version you want
 ```
 
@@ -25,7 +25,7 @@ Add the bundle to app/AppKernel.php
 ```php
 $bundles(
     ...
-       new Aequasi\Bundle\MemcachedBundle\AequasiMemcachedBundle(),
+       new MentionMe\Bundle\MemcachedBundle\MentionMeMemcachedBundle(),
     ...
 );
 ```
@@ -33,7 +33,7 @@ $bundles(
 Then add parameters (probably in config.yml) for your servers, and options
 
 ```yml
-aequasi_memcached:
+mentionme_memcached:
     clusters:
         default:
             prefix: 'result_' # Optional
@@ -56,7 +56,7 @@ aequasi_memcached:
 There are also options that you can specify above. You can get the list of options by running
 
 ```php
-php app/console config:dump aequasi_memcached
+php app/console config:dump mentionme_memcached
 ```
 
 #### Doctrine
@@ -66,7 +66,7 @@ This bundle allows you to use its services for Doctrine's caching methods of met
 If you want doctrine to use this as the result and query cache, add this
 
 ```yml
-aequasi_memcached:
+mentionme_memcached:
     doctrine:
         metadata:
             cluster: default
@@ -85,7 +85,7 @@ aequasi_memcached:
 This bundle even allows you to store your session data in one of your memcache clusters. To enable:
 
 ```yml
-aequasi_memcached:
+mentionme_memcached:
     session:
         cluster: default
         prefix: "session_"
@@ -116,7 +116,7 @@ Anti Stampede does not guarantee that the dog pile will not occur. Restarting Me
 You can use the default memcached functions, doctrine's `useResultCache` and `useQueryCache`, or you can use the `cache` function. Heres an example
 
 ```php
-use Aequasi\Bundle\MemcachedBundle\Cache\AntiStampedeMemcached as Cache;
+use MentionMe\Bundle\MemcachedBundle\Cache\AntiStampedeMemcached as Cache;
 
 /** @var $em \Doctrine\ORM\EntityManager */
 $data = $this->get( 'memcached.default' )->cache(
@@ -147,11 +147,4 @@ php app/console memcached:statistics cluster
 
 ### Need Help?
 
-Create an issue if you've found a bug,
-
-or email me at aequasi@gmail.com
-
-
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/aequasi/memcached-bundle/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-
-[99]: http://www.github.com/aequasi/cache-bundle
+Create an issue if you've found a bug.

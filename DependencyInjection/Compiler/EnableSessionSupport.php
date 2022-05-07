@@ -1,6 +1,6 @@
 <?php
 
-namespace Aequasi\Bundle\MemcachedBundle\DependencyInjection\Compiler;
+namespace MentionMe\Bundle\MemcachedBundle\DependencyInjection\Compiler;
 
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;

@@ -1,6 +1,6 @@
 parameters:
-    memcached.data_collector.class: Aequasi\Bundle\MemcachedBundle\DataCollector\MemcachedDataCollector
-    memcached.data_collector.template: AequasiMemcachedBundle:DataCollector:memcached
+    memcached.data_collector.class: MentionMe\Bundle\MemcachedBundle\DataCollector\MemcachedDataCollector
+    memcached.data_collector.template: MentionMeMemcachedBundle:DataCollector:memcached
 
 services:
     data_collector.memcached:

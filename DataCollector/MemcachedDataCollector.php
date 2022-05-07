@@ -1,8 +1,8 @@
 <?php
 
-namespace Aequasi\Bundle\MemcachedBundle\DataCollector;
+namespace MentionMe\Bundle\MemcachedBundle\DataCollector;
 
-use Aequasi\Bundle\MemcachedBundle\Cache\LoggingMemcachedInterface;
+use MentionMe\Bundle\MemcachedBundle\Cache\LoggingMemcachedInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\DataCollector;

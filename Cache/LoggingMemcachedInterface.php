@@ -5,7 +5,7 @@
  * @license   http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
-namespace Aequasi\Bundle\MemcachedBundle\Cache;
+namespace MentionMe\Bundle\MemcachedBundle\Cache;
 
 /**
  * Interface to allow for DataCollector to retrieve logged calls

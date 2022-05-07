@@ -5,9 +5,9 @@
  * @license   http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
-namespace Aequasi\Bundle\MemcachedBundle\Command;
+namespace MentionMe\Bundle\MemcachedBundle\Command;
 
-use Aequasi\Bundle\MemcachedBundle\Cache\Memcached;
+use MentionMe\Bundle\MemcachedBundle\Cache\Memcached;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

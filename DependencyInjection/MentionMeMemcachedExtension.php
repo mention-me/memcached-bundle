@@ -5,9 +5,9 @@
  * @license   http://www.apache.org/licenses/LICENSE-2.0.html Apache License, Version 2.0
  */
 
-namespace Aequasi\Bundle\MemcachedBundle\DependencyInjection;
+namespace MentionMe\Bundle\MemcachedBundle\DependencyInjection;
 
-use Aequasi\Bundle\MemcachedBundle\Cache\AntiStampedeMemcached;
+use MentionMe\Bundle\MemcachedBundle\Cache\AntiStampedeMemcached;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -23,7 +23,7 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
  * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/extension.html}
  * Based on Lsw\MemcachedBundle by Christian Soronellas
  */
-class AequasiMemcachedExtension extends Extension
+class MentionMeMemcachedExtension extends Extension
 {
 
 	/**
