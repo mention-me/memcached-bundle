@@ -27,7 +27,7 @@
 			"Aequasi\\Bundle\\MemcachedBundle": ""
 		},
 	    "psr-4": {
-		  	"Aequasi\\Bundle\\MemcachedBundle": "",
+		  	"Aequasi\\Bundle\\MemcachedBundle": ""
 	  	}
 	},
 	"target-dir": "Aequasi/Bundle/MemcachedBundle"
