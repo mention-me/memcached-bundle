@@ -3,5 +3,5 @@ services:
         autowire: true
         autoconfigure: true
 
-    MentionMe\MemcachedBundle\Command\:
+    MentionMe\Bundle\MemcachedBundle\Command\:
         resource: '../../Command/*'
