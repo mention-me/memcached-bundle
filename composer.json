@@ -28,9 +28,6 @@
 		"doctrine/dbal": ">=2.1.0"
 	},
 	"autoload":    {
-		"psr-0": {
-			"MentionMe\\Bundle\\MemcachedBundle": ""
-		},
 	    "psr-4": {
 		  	"MentionMe\\Bundle\\MemcachedBundle\\": ""
 	  	}
