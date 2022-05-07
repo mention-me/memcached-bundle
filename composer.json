@@ -25,7 +25,10 @@
 	"autoload":    {
 		"psr-0": {
 			"Aequasi\\Bundle\\MemcachedBundle": ""
-		}
+		},
+	    "psr-4": {
+		  	"Aequasi\\Bundle\\MemcachedBundle": "",
+	  	}
 	},
 	"target-dir": "Aequasi/Bundle/MemcachedBundle"
 }

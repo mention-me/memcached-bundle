@@ -7,11 +7,22 @@
 
 namespace Aequasi\Bundle\MemcachedBundle\Cache;
 
-use Doctrine\Bundle\DoctrineBundle\Registry;
-use Doctrine\DBAL\Connection;
+use Closure;
 
 /**
  * Class to encapsulate PHP Memcached object
+ *
+ * @method add(string $key, mixed $value, int $expiration = 0, int $udf_flags = 0): bool
+ * @method delete(string $key, int $time = 0): bool
+ * @method deleteMulti(array $keys, int $time = 0): array
+ * @method increment(string $key, int $offset = 1, int $initial_value = 0, int $expiry = 0): mixed
+ * @method decrement(string $key, int $offset = 1, int $initial_value = 0, int $expiry = 0): mixed
+ * @method get(string $key): mixed
+ * @method getMulti(array $keys, int $flags = 0): mixed
+ * @method set(string $key, mixed $value, int $expiration = 0, int $udf_flags = 0): bool
+ * @method setMulti(array $items, int $expiration = 0, int $udf_flags = 0): bool
+ * @method getServerList(): array
+ *
  */
 class Memcached
 {
@@ -48,66 +59,39 @@ class Memcached
 	 * @var string The namespace version
 	 */
 	protected $namespaceVersion;
+
+	protected bool $enabled;
+
+	protected bool $initialize;
+
+	protected \Memcached $memcached;
+
+	protected bool $persistent = false;
+
 	/**
-	 * @var bool
+	 * @var string|null
 	 */
-	protected $enabled;
+	protected ?string $prefix = null;
 
 	/**
 	 * @var bool
 	 */
-	protected $initialize;
-
-	/**
-	 * @var bool
-	 */
-	protected $keyMap = false;
-
-	/**
-	 * @var Connection
-	 */
-	protected $keyMapConnection = null;
-
-	/**
-	 * @var \Memcached
-	 */
-	protected $memcached;
-
-	/**
-	 * @var bool
-	 */
-	protected $persistent = false;
-
-	/**
-	 * @var string
-	 */
-	protected $prefix = null;
-
-	/**
-	 * @var bool
-	 */
-	protected $debug = false;
-
-	/**
-	 * @var array Store of keymap info if inserted to the database
-	 */
-	protected $keyMapInfo = [];
+	protected bool $debug;
 
 	/**
 	 * Constructor instantiates and stores Memcached object
 	 *
 	 * @param bool $enabled Are we caching?
-	 * @param bool $logging Are we logging?
-	 * @param null $persistentId Are we persisting?
+	 * @param bool $debug
+	 * @param string|null $persistentId Are we persisting?
 	 */
-	public function __construct($enabled, $debug = false, $persistentId = null)
+	public function __construct(bool $enabled, bool $debug = false, string $persistentId = null)
 	{
 		$this->enabled = $enabled;
-		$this->calls = [];
 		$this->debug = $debug;
 		if ($persistentId) {
 			$this->memcached = new \Memcached($persistentId);
-			$this->initialize = count($this->getServerList()) == 0;
+			$this->initialize = count($this->getServerList()) === 0;
 			$this->persistent = true;
 		} else {
 			$this->memcached = new \Memcached();
@@ -124,54 +108,11 @@ class Memcached
 	 */
 	public function addServers(array $serverList)
 	{
-		if ($this->persistent && sizeof($this->getServerList()) > 0) {
+		if ($this->persistent && count($this->getServerList()) > 0) {
 			return false;
 		}
 
 		return $this->processRequest('addServers', [$serverList]);
-	}
-
-	/**
-	 * Sets up Key Mapping, if enabled
-	 *
-	 * Creates the necessary tables, if they arent there, and updates the service
-	 *
-	 * @param array $configs
-	 * @param Registry $doctrine
-	 *
-	 * @throws \Exception
-	 */
-	public function setupKeyMap(array $configs, Registry $doctrine)
-	{
-		if ($configs['enabled']) {
-
-			// Make sure the connection isn't empty
-			if ($configs['connection'] === '') {
-				throw new \Exception("Please specify a `connection` for the keyMap setting under memcached. ");
-			}
-
-			// Grab the connection from doctrine
-			/** @var \Doctrine\DBAL\Connection $connection */
-			$connection = $doctrine->getConnection($configs['connection']);
-
-			// Fetch the memcached service, set key mapping to enabled, and set the connection
-			$this->setKeyMapEnabled(true)
-				->setKeyMapConnection($connection);
-		}
-	}
-
-	/**
-	 * Sets whether or not we are mapping keys
-	 *
-	 * @param bool $keyMap
-	 *
-	 * @return $this
-	 */
-	public function setKeyMapEnabled($keyMap)
-	{
-		$this->keyMap = $keyMap;
-
-		return $this;
 	}
 
 	/**
@@ -181,7 +122,7 @@ class Memcached
 	 *
 	 * @return mixed
 	 */
-	public function cache($key, $payload, $time = self::NO_EXPIRE)
+	public function cache($key, $payload, int $time = self::NO_EXPIRE)
 	{
 		if ($this->isEnabled() && $time !== self::NO_CACHE) {
 			$result = $this->get($key);
@@ -198,45 +139,11 @@ class Memcached
 	}
 
 	/**
-	 * Gets whether or not mapping keys is enabled
-	 *
-	 * @return boolean
-	 */
-	public function isKeyMapEnabled()
-	{
-		return $this->keyMap;
-	}
-
-	/**
-	 * Gets the Key Mapping Doctrine Connection
-	 *
-	 * @return Connection|null
-	 */
-	public function getKeyMapConnection()
-	{
-		return $this->keyMapConnection;
-	}
-
-	/**
-	 * Sets the Key Mapping Doctrine Connection
-	 *
-	 * @param Connection $keyMapConnection
-	 *
-	 * @return $this
-	 */
-	public function setKeyMapConnection(Connection $keyMapConnection)
-	{
-		$this->keyMapConnection = $keyMapConnection;
-
-		return $this;
-	}
-
-	/**
 	 * @param $enabled
 	 *
 	 * @return $this
 	 */
-	public function setEnabled($enabled)
+	public function setEnabled($enabled): Memcached
 	{
 		$this->enabled = $enabled;
 
@@ -246,7 +153,7 @@ class Memcached
 	/**
 	 * @return boolean
 	 */
-	public function isEnabled()
+	public function isEnabled(): bool
 	{
 		return $this->enabled;
 	}
@@ -254,7 +161,7 @@ class Memcached
 	/**
 	 * @return bool
 	 */
-	public function hasError()
+	public function hasError(): bool
 	{
 		return $this->memcached->getResultCode() !== \Memcached::RES_SUCCESS;
 	}
@@ -262,7 +169,7 @@ class Memcached
 	/**
 	 * @return string
 	 */
-	public function getError()
+	public function getError(): string
 	{
 		return $this->memcached->getResultMessage();
 	}
@@ -273,7 +180,7 @@ class Memcached
 	 *
 	 * @return mixed
 	 */
-	function __call($name, $arguments)
+	public function __call($name, $arguments)
 	{
 		return $this->processRequest($name, $arguments);
 	}
@@ -315,135 +222,29 @@ class Memcached
 			'setMultiByKey',
 		];
 
-		if (in_array($name, $useId)) {
+		if (in_array($name, $useId, true)) {
 			$arguments[0] = $this->getNamespacedId($arguments[0]);
 		}
 
-		$result = call_user_func_array(
+		return call_user_func_array(
 			[
 				$this->memcached,
 				$name,
 			],
 			$arguments
 		);
-
-		if (in_array($name,
-			[
-				'add',
-				'set',
-			]
-		)) {
-			$this->addToKeyMap($arguments[0], $arguments[1], $arguments[2]);
-		}
-		if ($name == 'delete') {
-			$this->deleteFromKeyMap($arguments[0]);
-		}
-		if ($name == 'flush') {
-			$this->truncateKeyMap();
-		}
-
-		return $result;
 	}
 
 	/**
-	 * Adds the given key to the key map
-	 *
-	 * @param $id
-	 * @param $data
-	 * @param $lifeTime
-	 *
-	 * @return bool|int
-	 */
-	protected function addToKeyMap($id, $data, $lifeTime)
-	{
-		if (!$this->isKeyMapEnabled()) {
-			return false;
-		}
-
-		$id = $this->getNamespacedId($id);
-
-		$data = [
-			'cache_key' => $id,
-			'memory_size' => $this->getPayloadSize($data),
-			'lifeTime' => $lifeTime,
-			'expiration' => date('Y-m-d H:i:s', strtotime("now +{$lifeTime} seconds")),
-			'insert_date' => date('Y-m-d H:i:s'),
-		];
-		if ($lifeTime === null) {
-			unset($data['lifeTime'], $data['expiration']);
-		}
-
-		if (isset($this->keyMapInfo[$id])) {
-			$data = array_merge($data, $this->keyMapInfo[$id]);
-		}
-
-		try {
-			return $this->getKeyMapConnection()->insert('memcached_key_map', $data);
-		} catch (\Exception $e) {
-			error_log("Could not write to `memcached_key_map`.");
-		}
-	}
-
-	public function setKeyMapInfo($id, $category = null, $description = null)
-	{
-		if (!$this->isKeyMapEnabled()) {
-			return false;
-		}
-
-		$id = $this->getNamespacedId($id);
-
-		$data = [];
-		if (null !== $category) {
-			$data['category'] = $category;
-		}
-
-		if (null !== $description) {
-			$data['description'] = $description;
-		}
-
-		$this->idMapInfo[$id] = $data;
-
-		return true;
-	}
-
-	/**
-	 * @param $id
-	 *
-	 * @return bool|int
-	 */
-	protected function deleteFromKeyMap($id)
-	{
-		if (!$this->isKeyMapEnabled()) {
-			return false;
-		}
-
-		$id = $this->getNamespacedId($id);
-
-		return $this->getKeyMapConnection()->delete('memcached_key_map', ['cache_key' => $id]);
-	}
-
-	/**
-	 * @return bool|int
-	 */
-	protected function truncateKeyMap()
-	{
-		if (!$this->isKeyMapEnabled()) {
-			return false;
-		}
-
-		return $this->getKeyMapConnection()->executeQuery('TRUNCATE memcached_key_map');
-	}
-
-	/**
-	 * @param \Closure|callable|mixed $payload
+	 * @param Closure|callable|mixed $payload
 	 *
 	 * @return mixed
 	 */
 	protected function getDataFromPayload($payload)
 	{
-		/** @var $payload \Closure|callable|mixed */
+		/** @var $payload Closure|callable|mixed */
 		if (is_callable($payload)) {
-			if (is_object($payload) && get_class($payload) == 'Closure') {
+			if (is_object($payload) && get_class($payload) === 'Closure') {
 				return $payload();
 			}
 
@@ -454,26 +255,11 @@ class Memcached
 	}
 
 	/**
-	 * Gets the memory size of the given variable
-	 *
-	 * @param $data
-	 *
-	 * @return int
-	 */
-	protected function getPayloadSize($data)
-	{
-		$start_memory = memory_get_usage();
-		$data = unserialize(serialize($data));
-
-		return memory_get_usage() - $start_memory - PHP_INT_SIZE * 8;
-	}
-
-	/**
 	 * Sets the prefix for this client
 	 *
 	 * @param string $prefix Prefix to use for this client
 	 *
-	 * @return LoggingMemcached
+	 * @return Memcached
 	 */
 	public function setPrefix($prefix)
 	{
@@ -523,9 +309,9 @@ class Memcached
 	/**
 	 * Prefix the passed id with the configured namespace value
 	 *
-	 * @param string $id The id to namespace
+	 * @param string|array $id The id(s) to namespace
 	 *
-	 * @return string $id The namespaced id
+	 * @return string|array $id The namespaced id(s)
 	 */
 	protected function getNamespacedId($id)
 	{
@@ -542,9 +328,9 @@ class Memcached
 				},
 				$id
 			);
-		} else {
-			return sprintf('%s[%s][%s]', $this->namespace, $id, $namespaceVersion);
 		}
+
+		return sprintf('%s[%s][%s]', $this->namespace, $id, $namespaceVersion);
 	}
 
 	/**

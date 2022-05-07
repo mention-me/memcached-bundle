@@ -47,7 +47,7 @@ class MemcachedDataCollector extends DataCollector
 	/**
 	 * {@inheritdoc}
 	 */
-	public function collect(Request $request, Response $response, \Exception $exception = null)
+	public function collect(Request $request, Response $response)
 	{
 		$empty = [
 			'calls' => [],
@@ -60,6 +60,7 @@ class MemcachedDataCollector extends DataCollector
 			'total' => $empty,
 		];
 		foreach ($this->clusters as $name => $memcached) {
+			/** @var LoggingMemcachedInterface $memcached */
 			$calls = $memcached->getLoggedCalls();
 			$this->data['clusters']['calls'][$name] = $calls;
 			$this->data['clusters']['options'][$name] = $this->options[$name];
@@ -136,14 +137,14 @@ class MemcachedDataCollector extends DataCollector
 			foreach ($calls as $call) {
 				$statistics[$name]['calls'] += 1;
 				$statistics[$name]['time'] += $call->time;
-				if ($call->name == 'get') {
+				if ($call->name === 'get') {
 					$statistics[$name]['reads'] += 1;
 					if ($call->result !== false) {
 						$statistics[$name]['hits'] += 1;
 					} else {
 						$statistics[$name]['misses'] += 1;
 					}
-				} elseif ($call->name == 'get') {
+				} elseif ($call->name === 'get') {
 					$statistics[$name]['writes'] += 1;
 				}
 			}

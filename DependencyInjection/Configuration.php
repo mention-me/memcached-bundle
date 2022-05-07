@@ -8,6 +8,7 @@
 namespace Aequasi\Bundle\MemcachedBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -22,31 +23,27 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  */
 class Configuration implements ConfigurationInterface
 {
-
-	/**
-	 * @var bool
-	 */
-	private $debug;
+	private bool $debug;
 
 	/**
 	 * Constructor
 	 *
 	 * @param Boolean $debug Whether to use the debug mode
 	 */
-	public function __construct($debug)
+	public function __construct(bool $debug)
 	{
-		$this->debug = (boolean)$debug;
+		$this->debug = $debug;
 	}
 
 	/**
 	 * Generates the configuration tree builder.
 	 *
-	 * @return \Symfony\Component\Config\Definition\Builder\TreeBuilder The tree builder
+	 * @return TreeBuilder The tree builder
 	 */
 	public function getConfigTreeBuilder()
 	{
-		$treeBuilder = new TreeBuilder();
-		$rootNode = $treeBuilder->root('memcached');
+		$treeBuilder = new TreeBuilder("memcached");
+		$rootNode = $treeBuilder->getRootNode();
 
 		$rootNode
 			->children()
@@ -59,34 +56,7 @@ class Configuration implements ConfigurationInterface
 	}
 
 	/**
-	 * Configure the 'memcached.keyMap` section
-	 *
-	 * @return ArrayNodeDefinition
-	 */
-	private function getKeymapNode()
-	{
-		$treeBuilder = new TreeBuilder();
-		$node = $treeBuilder->root('keyMap');
-
-		$node
-			->addDefaultsIfNotSet()
-			->info("Settings for creating a key map in a database")
-			->children()
-			->booleanNode('enabled')
-			->info("Enable or Disable storing keys and their lifetimes to the database. Default: False")
-			->defaultFalse()
-			->end()
-			->scalarNode('connection')
-			->info("Doctrine Connection Name")
-			->defaultValue("")
-			->end()
-			->end();
-
-		return $node;
-	}
-
-	/**
-	 * @return \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition|\Symfony\Component\Config\Definition\Builder\NodeDefinition
+	 * @return ArrayNodeDefinition|NodeDefinition
 	 */
 	private function getClustersNode()
 	{
@@ -142,7 +112,6 @@ class Configuration implements ConfigurationInterface
 			->end()
 			->end()
 			->end()
-			->append($this->getKeymapNode())
 			->append($this->getOptionsNode())
 			->end()
 			->end();
@@ -225,7 +194,7 @@ class Configuration implements ConfigurationInterface
 	}
 
 	/**
-	 * @return \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition|\Symfony\Component\Config\Definition\Builder\NodeDefinition
+	 * @return ArrayNodeDefinition|NodeDefinition
 	 */
 	private function getOptionsNode()
 	{

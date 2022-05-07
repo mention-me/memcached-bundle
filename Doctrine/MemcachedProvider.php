@@ -19,10 +19,7 @@ use Doctrine\Common\Cache\CacheProvider;
 class MemcachedProvider extends CacheProvider
 {
 
-	/**
-	 * @var Memcached
-	 */
-	private $memcached;
+	private Memcached $memcached;
 
 	/**
 	 * {@inheritdoc}

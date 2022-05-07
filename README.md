@@ -51,9 +51,6 @@ aequasi_memcached:
                 no_block: true
                 server_failure_limit: 7
                 tcp_no_delay: true
-            keyMap:
-                enabled: %memcached.keymap.enabled%
-                connection: default
 ```
 
 There are also options that you can specify above. You can get the list of options by running
@@ -146,9 +143,6 @@ php app/console memcached:delete cluster key
 php app/console memcached:clear [cluster] # If cluster is specified, might not clear all the keys for the cluster. Uses http://www.php.net/manual/en/memcached.getallkeys.php
 
 php app/console memcached:statistics cluster
-
-php app/console memcached:initialize:keymap cluster (required if using the keymap)
-
 ```
 
 ### Need Help?

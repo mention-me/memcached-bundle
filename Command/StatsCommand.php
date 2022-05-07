@@ -68,7 +68,7 @@ class StatsCommand extends Command
 	 *
 	 * @return string ConsoleComponent-formatted output, suitable for ->writeln() usage
 	 */
-	protected function formatStats($stats)
+	protected function formatStats($stats): string
 	{
 		if (!$stats) {
 			return "No statistics returned.\n";
@@ -76,7 +76,7 @@ class StatsCommand extends Command
 
 		$out = "Servers found: " . count($stats) . "\n\n";
 		foreach ($stats as $host => $item) {
-			if (!is_array($item) || count($item) == 0) {
+			if (!is_array($item) || count($item) === 0) {
 				$out .= "  <error>" . $host . "</error>\n";
 
 				continue;
@@ -107,7 +107,7 @@ class StatsCommand extends Command
 	 *
 	 * @return string A short string with friendly formatting
 	 */
-	protected function formatUsage($bytes, $maxbytes)
+	protected function formatUsage(int $bytes, int $maxbytes): string
 	{
 		if (!is_numeric($maxbytes) || $maxbytes < 1) {
 			return '(undefined)';
@@ -127,7 +127,7 @@ class StatsCommand extends Command
 	 *
 	 * @return string A short string with friendly formatting
 	 */
-	protected function formatUptime($uptime)
+	protected function formatUptime(int $uptime): string
 	{
 		$days = floor($uptime / 24 / 60 / 60);
 		$daysRemainder = $uptime - ($days * 24 * 60 * 60);

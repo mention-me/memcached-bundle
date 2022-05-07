@@ -8,6 +8,8 @@
 namespace Aequasi\Bundle\MemcachedBundle\Session;
 
 use Aequasi\Bundle\MemcachedBundle\Cache\Memcached;
+use InvalidArgumentException;
+use SessionHandlerInterface;
 
 /**
  * MemcachedSessionHandler.
@@ -16,23 +18,19 @@ use Aequasi\Bundle\MemcachedBundle\Cache\Memcached;
  * provided by the PHP memcached extension.
  *
  */
-class MemcachedSessionHandler implements \SessionHandlerInterface
+class MemcachedSessionHandler implements SessionHandlerInterface
 {
-
-	/**
-	 * @var Memcached Memcached driver.
-	 */
-	private $memcached;
+	private Memcached $memcached;
 
 	/**
 	 * @var integer Time to live in seconds
 	 */
-	private $ttl;
+	private int $ttl;
 
 	/**
 	 * @var string Key prefix for shared environments.
 	 */
-	private $prefix;
+	private string $prefix;
 
 	/**
 	 * Constructor.
@@ -44,19 +42,20 @@ class MemcachedSessionHandler implements \SessionHandlerInterface
 	 * @param Memcached $memcached A Memcached instance
 	 * @param array $options An associative array of Memcached options
 	 *
-	 * @throws \InvalidArgumentException When unsupported options are passed
+	 * @throws InvalidArgumentException When unsupported options are passed
 	 */
 	public function __construct(Memcached $memcached, array $options = [])
 	{
 		$this->memcached = $memcached;
 
-		if ($diff = array_diff(array_keys($options),
+		if ($diff = array_diff(
+			array_keys($options),
 			[
 				'prefix',
 				'expiretime',
 			]
 		)) {
-			throw new \InvalidArgumentException(
+			throw new InvalidArgumentException(
 				sprintf(
 					'The following options are not supported "%s"',
 					implode(', ', $diff)
@@ -65,7 +64,7 @@ class MemcachedSessionHandler implements \SessionHandlerInterface
 		}
 
 		$this->ttl = isset($options['expiretime']) ? (int)$options['expiretime'] : 86400;
-		$this->prefix = isset($options['prefix']) ? $options['prefix'] : 'sf2s-';
+		$this->prefix = $options['prefix'] ?? 'sf2s-';
 	}
 
 	/**

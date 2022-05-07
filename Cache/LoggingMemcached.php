@@ -7,8 +7,6 @@
 
 namespace Aequasi\Bundle\MemcachedBundle\Cache;
 
-use Doctrine\Bundle\DoctrineBundle\Registry;
-
 /**
  * Class to encapsulate PHP Memcached object for unit tests and to add logging in logging mode
  */
@@ -95,7 +93,7 @@ class LoggingMemcached extends Memcached implements LoggingMemcachedInterface
 			'setMultiByKey',
 		];
 
-		if (in_array($name, $useId)) {
+		if (in_array($name, $useId, true)) {
 			$arguments[0] = $this->getNamespacedId($arguments[0]);
 		}
 
@@ -111,7 +109,7 @@ class LoggingMemcached extends Memcached implements LoggingMemcachedInterface
 			$time = microtime(true) - $start;
 			$call = (object)compact('start', 'time', 'name', 'arguments', 'result');
 
-			// Removing poissible bad values from the data collector
+			// Removing possible bad values from the data collector
 			if (in_array($name,
 				[
 					'get',
@@ -144,25 +142,6 @@ class LoggingMemcached extends Memcached implements LoggingMemcachedInterface
 				],
 				$arguments
 			);
-		}
-
-		if (in_array($name,
-			[
-				'add',
-				'set',
-			]
-		)) {
-			$this->addToKeyMap(
-				$arguments[0],
-				$arguments[1],
-				isset($arguments[2]) ? $arguments[2] : null
-			);
-		}
-		if ($name == 'delete') {
-			$this->deleteFromKeyMap($arguments[0]);
-		}
-		if ($name == 'flush') {
-			$this->truncateKeyMap();
 		}
 
 		return $result;

@@ -7,6 +7,7 @@
 
 namespace Aequasi\Bundle\MemcachedBundle\DependencyInjection;
 
+use Aequasi\Bundle\MemcachedBundle\Cache\AntiStampedeMemcached;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -30,6 +31,7 @@ class AequasiMemcachedExtension extends Extension
 	 *
 	 * @param array $configs Array of configs
 	 * @param ContainerBuilder $container Container Object
+	 * @throws \Exception
 	 */
 	public function load(array $configs, ContainerBuilder $container)
 	{
@@ -71,7 +73,7 @@ class AequasiMemcachedExtension extends Extension
 	 * @param array $config A configuration array
 	 * @param ContainerBuilder $container A ContainerBuilder instance
 	 */
-	protected function loadDoctrine(array $config, ContainerBuilder $container)
+	protected function loadDoctrine(array $config, ContainerBuilder $container): void
 	{
 		foreach ($config['doctrine'] as $name => $cache) {
 			$clusterConfig = $config['clusters'][$cache['cluster']];
@@ -97,7 +99,7 @@ class AequasiMemcachedExtension extends Extension
 	 *
 	 * @throws LogicException
 	 */
-	private function enableSessionSupport(array $config, ContainerBuilder $container)
+	private function enableSessionSupport(array $config, ContainerBuilder $container): void
 	{
 		$cluster = $config['session']['cluster'];
 		if (null === $cluster) {
@@ -135,7 +137,7 @@ class AequasiMemcachedExtension extends Extension
 	 *
 	 * @throws LogicException
 	 */
-	private function addClusters(array $config, ContainerBuilder $container)
+	private function addClusters(array $config, ContainerBuilder $container): void
 	{
 		foreach ($config['clusters'] as $cluster => $memcachedConfig) {
 			$this->newMemcachedClient($cluster, $memcachedConfig, $container);
@@ -155,8 +157,9 @@ class AequasiMemcachedExtension extends Extension
 	 * @param ContainerBuilder $container Service container
 	 *
 	 * @throws \LogicException
+	 * @throws \Exception
 	 */
-	private function newMemcachedClient($name, array $config, ContainerBuilder $container)
+	private function newMemcachedClient($name, array $config, ContainerBuilder $container): void
 	{
 		// Check if the Memcached extension is loaded
 		if (!class_exists('Memcached')) {
@@ -165,7 +168,7 @@ class AequasiMemcachedExtension extends Extension
 			);
 		}
 
-		$memcached = new Definition('Aequasi\Bundle\MemcachedBundle\Cache\AntiStampedeMemcached');
+		$memcached = new Definition(AntiStampedeMemcached::class);
 
 		// Is this Cluster Enabled
 		$memcached->addArgument($config['enabled']);
@@ -176,17 +179,6 @@ class AequasiMemcachedExtension extends Extension
 		// Check if it has to be persistent
 		if (isset($config['persistent_id'])) {
 			$memcached->addArgument($config['persistent_id']);
-		}
-
-		// Check if Key Map logging is enabled
-		if ($config['keyMap']['enabled']) {
-			$memcached->addMethodCall(
-				'setupKeyMap',
-				[
-					$config['keyMap'],
-					new Reference('doctrine'),
-				]
-			);
 		}
 
 		// Add servers to the memcached client
@@ -207,23 +199,23 @@ class AequasiMemcachedExtension extends Extension
 		// Get default memcached options
 		$options = $container->getParameter('memcached.default_options');
 
-		// Add overriden options
+		// Add override options
 		if (isset($config['options'])) {
 			foreach ($options as $key => $value) {
 				if (isset($config['options'][$key])) {
-					if ($key == 'serializer') {
+					if ($key === 'serializer') {
 						// serializer option needs to be supported and is a constant
-						if ($value != 'php' && !constant('Memcached::HAVE_' . strtoupper($value))) {
+						if ($value !== 'php' && !constant('Memcached::HAVE_' . strtoupper($value))) {
 							throw new \LogicException("Invalid serializer specified for Memcached: $value");
 						}
 						$newValue = constant('Memcached::SERIALIZER_' . strtoupper($value));
-					} elseif ($key == 'distribution') {
+					} elseif ($key === 'distribution') {
 						// distribution is defined as a constant
 						$newValue = constant('Memcached::DISTRIBUTION_' . strtoupper($value));
 					} else {
 						$newValue = $config['options'][$key];
 					}
-					if ($config['options'][$key] != $value) {
+					if ($config['options'][$key] !== $value) {
 						// not default, add method call and update options
 						$constant = 'Memcached::OPT_' . strtoupper($key);
 						$memcached->addMethodCall(
