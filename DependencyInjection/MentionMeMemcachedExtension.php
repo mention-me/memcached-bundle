@@ -170,6 +170,7 @@ class MentionMeMemcachedExtension extends Extension
 		}
 
 		$memcached = new Definition(AntiStampedeMemcached::class);
+		$memcached->setPublic(true);
 
 		// Is this Cluster Enabled
 		$memcached->addArgument($config['enabled']);
