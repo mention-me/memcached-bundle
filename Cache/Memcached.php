@@ -22,6 +22,9 @@ use Closure;
  * @method set(string $key, mixed $value, int $expiration = 0, int $udf_flags = 0): bool
  * @method setMulti(array $items, int $expiration = 0, int $udf_flags = 0): bool
  * @method getServerList(): array
+ * @method cas(float $cas_token, string $key, $value, int $expiration = null)
+ * @method getAllKeys(): array|false
+ * @method flush(int $delay = 0): bool
  *
  */
 class Memcached
@@ -116,10 +119,6 @@ class Memcached
 	}
 
 	/**
-	 * @param     $key
-	 * @param     $payload
-	 * @param int $time
-	 *
 	 * @return mixed
 	 */
 	public function cache($key, $payload, int $time = self::NO_EXPIRE)
@@ -138,11 +137,6 @@ class Memcached
 		return $result;
 	}
 
-	/**
-	 * @param $enabled
-	 *
-	 * @return $this
-	 */
 	public function setEnabled($enabled): Memcached
 	{
 		$this->enabled = $enabled;
@@ -150,34 +144,22 @@ class Memcached
 		return $this;
 	}
 
-	/**
-	 * @return boolean
-	 */
 	public function isEnabled(): bool
 	{
 		return $this->enabled;
 	}
 
-	/**
-	 * @return bool
-	 */
 	public function hasError(): bool
 	{
 		return $this->memcached->getResultCode() !== \Memcached::RES_SUCCESS;
 	}
 
-	/**
-	 * @return string
-	 */
 	public function getError(): string
 	{
 		return $this->memcached->getResultMessage();
 	}
 
 	/**
-	 * @param $name
-	 * @param $arguments
-	 *
 	 * @return mixed
 	 */
 	public function __call($name, $arguments)
@@ -185,42 +167,44 @@ class Memcached
 		return $this->processRequest($name, $arguments);
 	}
 
+    protected function getAllowedTypes(): array
+    {
+        return [
+            'add',
+            'delete',
+            'deleteByKey',
+            'deleteMulti',
+            'deleteMultiByKey',
+            'increment',
+            'prepend',
+            'prependByKey',
+            'replace',
+            'replaceByKey',
+            'touch',
+            'touchByKey',
+            'addByKey',
+            'append',
+            'appendByKey',
+            'decrement',
+            'get',
+            'getByKey',
+            'getDelayed',
+            'getDelayedByKey',
+            'getMulti',
+            'getMultiByKey',
+            'set',
+            'setByKey',
+            'setMulti',
+            'setMultiByKey',
+        ];
+    }
+
 	/**
-	 * @param $name
-	 * @param $arguments
-	 *
 	 * @return mixed
 	 */
-	protected function processRequest($name, $arguments)
+	protected function processRequest(string $name, array $arguments)
 	{
-		$useId = [
-			'add',
-			'delete',
-			'deleteByKey',
-			'deleteMulti',
-			'deleteMultiByKey',
-			'increment',
-			'prepend',
-			'prependByKey',
-			'replace',
-			'replaceByKey',
-			'touch',
-			'touchByKey',
-			'addByKey',
-			'append',
-			'appendByKey',
-			'decrement',
-			'get',
-			'getByKey',
-			'getDelayed',
-			'getDelayedByKey',
-			'getMulti',
-			'getMultiByKey',
-			'set',
-			'setByKey',
-			'setMulti',
-			'setMultiByKey',
-		];
+		$useId = $this->getAllowedTypes();
 
 		if (in_array($name, $useId, true)) {
 			$arguments[0] = $this->getNamespacedId($arguments[0]);
@@ -254,54 +238,35 @@ class Memcached
 		return $payload;
 	}
 
-	/**
-	 * Sets the prefix for this client
-	 *
-	 * @param string $prefix Prefix to use for this client
-	 *
-	 * @return Memcached
-	 */
-	public function setPrefix($prefix)
+	public function setPrefix(string $prefix): Memcached
 	{
 		$this->prefix = $prefix;
 
 		return $this;
 	}
 
-	/**
-	 * @return string Returns the prefix
-	 */
-	public function getPrefix()
+	public function getPrefix(): string
 	{
 		return $this->prefix;
 	}
 
-	/**
-	 * @return bool Returns whether or not $this->prefix is empty()
-	 */
-	public function hasPrefix()
+	public function hasPrefix(): bool
 	{
 		return !empty($this->prefix);
 	}
 
 	/**
 	 * Set the namespace to prefix all cache ids with.
-	 *
-	 * @param string $namespace
-	 *
-	 * @return void
 	 */
-	public function setNamespace($namespace)
+	public function setNamespace(string $namespace): void
 	{
-		$this->namespace = (string)$namespace;
+		$this->namespace = $namespace;
 	}
 
 	/**
 	 * Retrieve the namespace that prefixes all cache ids.
-	 *
-	 * @return string
 	 */
-	public function getNamespace()
+	public function getNamespace(): string
 	{
 		return $this->namespace;
 	}
@@ -333,22 +298,12 @@ class Memcached
 		return sprintf('%s[%s][%s]', $this->namespace, $id, $namespaceVersion);
 	}
 
-	/**
-	 * Namespace cache key
-	 *
-	 * @return string $namespaceCacheKey
-	 */
-	protected function getNamespaceCacheKey()
+	protected function getNamespaceCacheKey(): string
 	{
 		return sprintf(self::NAMESPACE_CACHEKEY, $this->namespace);
 	}
 
-	/**
-	 * Namespace version
-	 *
-	 * @return string $namespaceVersion
-	 */
-	protected function getNamespaceVersion()
+	protected function getNamespaceVersion(): string
 	{
 		if (null !== $this->namespaceVersion) {
 			return $this->namespaceVersion;
@@ -367,4 +322,5 @@ class Memcached
 
 		return $this->namespaceVersion;
 	}
+
 }

@@ -12,11 +12,5 @@ namespace MentionMe\Bundle\MemcachedBundle\Cache;
  */
 interface LoggingMemcachedInterface
 {
-	/**
-	 * Get the logged calls for this Memcached object
-	 *
-	 * @return array Array of all of the calls made to the Memcached object
-	 */
-	public function getLoggedCalls();
-
+	public function getLoggedCalls(): array;
 }

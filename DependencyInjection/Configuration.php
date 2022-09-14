@@ -26,8 +26,6 @@ class Configuration implements ConfigurationInterface
 	private bool $debug;
 
 	/**
-	 * Constructor
-	 *
 	 * @param Boolean $debug Whether to use the debug mode
 	 */
 	public function __construct(bool $debug)
@@ -37,10 +35,8 @@ class Configuration implements ConfigurationInterface
 
 	/**
 	 * Generates the configuration tree builder.
-	 *
-	 * @return TreeBuilder The tree builder
 	 */
-	public function getConfigTreeBuilder()
+	public function getConfigTreeBuilder(): TreeBuilder
 	{
 		$treeBuilder = new TreeBuilder("memcached");
 		$rootNode = $treeBuilder->getRootNode();
@@ -60,8 +56,8 @@ class Configuration implements ConfigurationInterface
 	 */
 	private function getClustersNode()
 	{
-		$treeBuilder = new TreeBuilder();
-		$node = $treeBuilder->root('clusters');
+		$treeBuilder = new TreeBuilder('clusters');
+		$node = $treeBuilder->getRootNode();
 
 		$node
 			->requiresAtLeastOneElement()
@@ -121,13 +117,11 @@ class Configuration implements ConfigurationInterface
 
 	/**
 	 * Configure the "memcached.session" section
-	 *
-	 * @return ArrayNodeDefinition
 	 */
-	private function addSessionSupportSection()
+	private function addSessionSupportSection(): NodeDefinition
 	{
-		$tree = new TreeBuilder();
-		$node = $tree->root('session');
+		$tree = new TreeBuilder('session');
+		$node = $tree->getRootNode();
 
 		$node
 			->children()
@@ -143,13 +137,11 @@ class Configuration implements ConfigurationInterface
 
 	/**
 	 * Configure the "memcached.doctrine" section
-	 *
-	 * @return ArrayNodeDefinition
 	 */
-	private function addDoctrineSection()
+	private function addDoctrineSection(): NodeDefinition
 	{
-		$tree = new TreeBuilder();
-		$node = $tree->root('doctrine');
+		$tree = new TreeBuilder('doctrine');
+		$node = $tree->getRootNode();
 
 		foreach ([
 					 'metadata',
@@ -198,8 +190,8 @@ class Configuration implements ConfigurationInterface
 	 */
 	private function getOptionsNode()
 	{
-		$treeBuilder = new TreeBuilder();
-		$node = $treeBuilder->root('options');
+		$treeBuilder = new TreeBuilder('options');
+		$node = $treeBuilder->getRootNode();
 
 		$node
 			->children()

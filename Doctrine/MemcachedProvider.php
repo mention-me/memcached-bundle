@@ -32,41 +32,37 @@ class MemcachedProvider extends CacheProvider
 	/**
 	 * {@inheritdoc}
 	 */
-	public function contains($id)
-	{
+	public function contains($id): bool
+    {
 		return $this->doContains($id);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	public function save($id, $data, $lifeTime = 0)
-	{
+	public function save($id, $data, $lifeTime = 0): bool
+    {
 		return $this->doSave($id, $data, $lifeTime);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	public function delete($id)
-	{
+	public function delete($id): bool
+    {
 		return $this->doDelete($id);
 	}
 
 	/**
 	 * Gets the memcached instance used by the cache.
-	 *
-	 * @return Memcached
 	 */
-	public function getMemcached()
-	{
+	public function getMemcached(): Memcached
+    {
 		return $this->memcached;
 	}
 
 	/**
 	 * Sets the memcached instance to use.
-	 *
-	 * @param Memcached $memcached
 	 */
 	public function setMemcached(Memcached $memcached)
 	{
@@ -84,16 +80,16 @@ class MemcachedProvider extends CacheProvider
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doContains($id)
-	{
+	protected function doContains($id): bool
+    {
 		return (bool)$this->memcached->get($id);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doSave($id, $data, $lifeTime = 0)
-	{
+	protected function doSave($id, $data, $lifeTime = 0): bool
+    {
 		if ($lifeTime > 30 * 24 * 3600) {
 			$lifeTime = time() + $lifeTime;
 		}
@@ -104,16 +100,16 @@ class MemcachedProvider extends CacheProvider
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doDelete($id)
-	{
+	protected function doDelete($id): bool
+    {
 		return $this->memcached->delete($id);
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function doFlush()
-	{
+	protected function doFlush(): bool
+    {
 		return $this->memcached->flush();
 	}
 
@@ -145,8 +141,8 @@ class MemcachedProvider extends CacheProvider
 		return $data;
 	}
 
-	protected function getServerStats($stats)
-	{
+	protected function getServerStats($stats): array
+    {
 		return [
 			Cache::STATS_HITS => $stats['get_hits'],
 			Cache::STATS_MISSES => $stats['get_misses'],

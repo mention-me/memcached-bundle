@@ -70,16 +70,16 @@ class MemcachedSessionHandler implements SessionHandlerInterface
 	/**
 	 * {@inheritDoc}
 	 */
-	public function open($savePath, $sessionName)
-	{
+	public function open($savePath, $sessionName): bool
+    {
 		return true;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function close()
-	{
+	public function close(): bool
+    {
 		return true;
 	}
 
@@ -110,7 +110,7 @@ class MemcachedSessionHandler implements SessionHandlerInterface
 	/**
 	 * {@inheritDoc}
 	 */
-	public function gc($lifetime)
+	public function gc($lifetime): bool
 	{
 		// not required here because memcached will auto expire the records anyhow.
 		return true;

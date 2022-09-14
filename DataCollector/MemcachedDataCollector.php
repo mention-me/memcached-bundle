@@ -14,15 +14,9 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollector;
  */
 class MemcachedDataCollector extends DataCollector
 {
-	/**
-	 * @var array
-	 */
-	private $clusters = [];
+	private array $clusters = [];
 
-	/**
-	 * @var array
-	 */
-	private $options = [];
+	private array $options = [];
 
 	/**
 	 * @var array
@@ -31,14 +25,8 @@ class MemcachedDataCollector extends DataCollector
 
 	/**
 	 * Add a Memcached object to the collector
-	 *
-	 * @param string $name Name of the Memcached client
-	 * @param array $options Options for Memcached client
-	 * @param LoggingMemcachedInterface $memcached Logging Memcached object
-	 *
-	 * @return void
 	 */
-	public function addCluster($name, $options, LoggingMemcachedInterface $memcached)
+	public function addCluster(string $name, array $options, LoggingMemcachedInterface $memcached): void
 	{
 		$this->clusters[$name] = $memcached;
 		$this->options[$name] = $options;
@@ -71,10 +59,7 @@ class MemcachedDataCollector extends DataCollector
 		);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getName()
+	public function getName(): string
 	{
 		return 'memcached';
 	}
@@ -119,10 +104,7 @@ class MemcachedDataCollector extends DataCollector
 		return $this->data['clusters']['options'];
 	}
 
-	/**
-	 * @return array
-	 */
-	private function calculateStatistics()
+	private function calculateStatistics(): array
 	{
 		$statistics = [];
 		foreach ($this->data['clusters']['calls'] as $name => $calls) {
@@ -158,12 +140,7 @@ class MemcachedDataCollector extends DataCollector
 		return $statistics;
 	}
 
-	/**
-	 * @param $statistics
-	 *
-	 * @return array
-	 */
-	private function calculateTotalStatistics($statistics)
+	private function calculateTotalStatistics(array $statistics): array
 	{
 		$totals = [
 			'calls' => 0,

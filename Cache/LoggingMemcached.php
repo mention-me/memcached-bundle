@@ -12,24 +12,18 @@ namespace MentionMe\Bundle\MemcachedBundle\Cache;
  */
 class LoggingMemcached extends Memcached implements LoggingMemcachedInterface
 {
-	/**
-	 * @var array
-	 */
-	protected $calls;
+	protected array $calls;
 
-	/**
-	 * @var bool
-	 */
-	protected $logging;
+	protected bool $logging;
 
 	/**
 	 * Constructor instantiates and stores Memcached object
 	 *
 	 * @param bool $enabled Are we caching?
 	 * @param bool $debug Are we logging?
-	 * @param null $persistentId Are we persisting?
+	 * @param string|null $persistentId Are we persisting?
 	 */
-	public function __construct($enabled, $debug = false, $persistentId = null)
+	public function __construct(bool $enabled, bool $debug = false, string $persistentId = null)
 	{
 		$this->logging = $debug;
 		parent::__construct($enabled, $debug, $persistentId);
@@ -37,10 +31,8 @@ class LoggingMemcached extends Memcached implements LoggingMemcachedInterface
 
 	/**
 	 * Get the logged calls for this Memcached object
-	 *
-	 * @return array Array of calls made to the Memcached object
 	 */
-	public function getLoggedCalls()
+	public function getLoggedCalls(): array
 	{
 		return $this->calls;
 	}
@@ -57,41 +49,11 @@ class LoggingMemcached extends Memcached implements LoggingMemcachedInterface
 	}
 
 	/**
-	 * @param $name
-	 * @param $arguments
-	 *
 	 * @return mixed
 	 */
-	protected function processRequest($name, $arguments)
+	protected function processRequest(string $name, array $arguments)
 	{
-		$useId = [
-			'add',
-			'delete',
-			'deleteByKey',
-			'deleteMulti',
-			'deleteMultiByKey',
-			'increment',
-			'prepend',
-			'prependByKey',
-			'replace',
-			'replaceByKey',
-			'touch',
-			'touchByKey',
-			'addByKey',
-			'append',
-			'appendByKey',
-			'decrement',
-			'get',
-			'getByKey',
-			'getDelayed',
-			'getDelayedByKey',
-			'getMulti',
-			'getMultiByKey',
-			'set',
-			'setByKey',
-			'setMulti',
-			'setMultiByKey',
-		];
+		$useId = $this->getAllowedTypes();
 
 		if (in_array($name, $useId, true)) {
 			$arguments[0] = $this->getNamespacedId($arguments[0]);

@@ -77,7 +77,6 @@ class MentionMeMemcachedExtension extends Extension
 	protected function loadDoctrine(array $config, ContainerBuilder $container): void
 	{
 		foreach ($config['doctrine'] as $name => $cache) {
-			$clusterConfig = $config['clusters'][$cache['cluster']];
 			$client = new Reference(sprintf('memcached.%s', $cache['cluster']));
 			foreach ($cache['entity_managers'] as $em) {
 				$definition = new Definition($container->getParameter('memcached.doctrine_cache.class'));

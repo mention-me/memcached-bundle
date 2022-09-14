@@ -23,7 +23,7 @@ class AntiStampedeMemcached extends LoggingMemcached
 	 *
 	 * @param string $key Key of the value you are trying to retrieve
 	 *
-	 * @return string Value read from cache or false if cache is stale
+	 * @return string|bool Value read from cache or false if cache is stale
 	 */
 	public function getAdp($key)
 	{
@@ -64,7 +64,7 @@ class AntiStampedeMemcached extends LoggingMemcached
 	 *
 	 * @return boolean True on success, false on failure
 	 */
-	public function setAdp($key, $value, $ttl = 0)
+	public function setAdp(string $key, string $value, int $ttl = 0): bool
 	{
 		if ($ttl === 0) {
 			$ttl = self::MAX_TTL;
@@ -77,9 +77,7 @@ class AntiStampedeMemcached extends LoggingMemcached
 				json_encode($value),
 			]
 		);
-		$result = $this->set($key, $value, 0);
-
-		return $result;
+		return $this->set($key, $value, 0);
 	}
 
 }
