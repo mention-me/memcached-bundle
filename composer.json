@@ -21,7 +21,7 @@
 		"email": "dev@mention-me.com"
 	},
 	"require":     {
-		"php": "^7.4 || ^8.0" ,
+		"php": "^8.0" ,
 		"ext-memcached": "*",
 		"symfony/symfony": "^4.4",
 		"doctrine/common": ">=2.1.0",

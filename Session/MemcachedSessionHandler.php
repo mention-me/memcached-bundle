@@ -86,7 +86,7 @@ class MemcachedSessionHandler implements SessionHandlerInterface
 	/**
 	 * {@inheritDoc}
 	 */
-	public function read($id)
+	public function read($id): string|false
 	{
 		return $this->memcached->get($this->prefix . $id) ?: '';
 	}
@@ -110,9 +110,9 @@ class MemcachedSessionHandler implements SessionHandlerInterface
 	/**
 	 * {@inheritDoc}
 	 */
-	public function gc($max_lifetime): bool
+	public function gc(int $max_lifetime): int|false
 	{
 		// not required here because memcached will auto expire the records anyhow.
-		return true;
+		return 0;
 	}
 }
